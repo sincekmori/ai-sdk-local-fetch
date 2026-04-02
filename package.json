@@ -30,6 +30,14 @@
       }
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sincekmori/ai-sdk-local-fetch.git"
+  },
+  "homepage": "https://github.com/sincekmori/ai-sdk-local-fetch#readme",
+  "bugs": {
+    "url": "https://github.com/sincekmori/ai-sdk-local-fetch/issues"
+  },
   "files": [
     "dist",
     "LICENSE",
