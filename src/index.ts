@@ -10,9 +10,51 @@ import {
 
 type FetchFunction = typeof globalThis.fetch;
 
-export type LocalFetchOptions = {
+/**
+ * Options passed to `streamText`.
+ */
+export type StreamTextOptions = {
 	model: LanguageModel;
 } & Omit<Parameters<typeof streamText>[0], "model" | "messages" | "prompt">;
+
+/**
+ * Options passed to `convertToModelMessages`.
+ *
+ * Mirrors the second parameter of `convertToModelMessages` but is kept as a
+ * standalone exported type so callers can reference it without importing from
+ * the `ai` package directly.
+ */
+export type ConvertToModelMessagesOptions = NonNullable<
+	Parameters<typeof convertToModelMessages>[1]
+>;
+
+/**
+ * Options passed to `result.toUIMessageStreamResponse()`.
+ *
+ * Derived from the first parameter of `toUIMessageStreamResponse` so it stays
+ * in sync with the `ai` package automatically.
+ */
+export type ToUIMessageStreamResponseOptions = NonNullable<
+	Parameters<ReturnType<typeof streamText>["toUIMessageStreamResponse"]>[0]
+>;
+
+export type LocalFetchOptions = {
+	/**
+	 * Options forwarded to `streamText`, including the required `model`.
+	 */
+	streamTextOptions: StreamTextOptions;
+	/**
+	 * Options forwarded to `convertToModelMessages`.
+	 *
+	 * `tools` defaults to `streamTextOptions.tools` when omitted, so you
+	 * rarely need to set it explicitly.
+	 */
+	convertToModelMessagesOptions?: ConvertToModelMessagesOptions;
+	/**
+	 * Options forwarded to `result.toUIMessageStreamResponse()`.
+	 */
+	toUIMessageStreamResponseOptions?: ToUIMessageStreamResponseOptions;
+};
 
 /**
  * Creates a fetch-compatible function that executes `streamText` locally
@@ -27,13 +69,20 @@ export type LocalFetchOptions = {
  * import { openai } from "@ai-sdk/openai";
  *
  * const fetch = createLocalFetch({
- *   model: openai("gpt-5.2-chat"),
- *   system: "You are a helpful assistant.",
+ *   streamTextOptions: {
+ *     model: openai("gpt-5.2-chat"),
+ *     system: "You are a helpful assistant.",
+ *     tools: { myTool }, // automatically forwarded to convertToModelMessages too
+ *   },
  * });
  * ```
  */
 export const createLocalFetch =
-	({ model, ...options }: LocalFetchOptions): FetchFunction =>
+	({
+		streamTextOptions,
+		convertToModelMessagesOptions,
+		toUIMessageStreamResponseOptions,
+	}: LocalFetchOptions): FetchFunction =>
 	async (
 		_input: string | URL | Request,
 		init?: RequestInit,
@@ -51,10 +100,12 @@ export const createLocalFetch =
 		const { messages } = JSON.parse(init.body) as { messages: UIMessage[] };
 
 		const result = streamText({
-			...options,
-			model,
-			messages: await convertToModelMessages(messages),
+			...streamTextOptions,
+			messages: await convertToModelMessages(messages, {
+				tools: streamTextOptions.tools,
+				...convertToModelMessagesOptions,
+			}),
 		});
 
-		return result.toUIMessageStreamResponse();
+		return result.toUIMessageStreamResponse(toUIMessageStreamResponseOptions);
 	};

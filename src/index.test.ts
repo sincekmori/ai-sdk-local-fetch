@@ -44,26 +44,26 @@ const sampleMessages = [
 // ---------------------------------------------------------------------------
 describe("createLocalFetch", () => {
 	it("returns a function", () => {
-		const fetch = createLocalFetch({ model: mockModel });
+		const fetch = createLocalFetch({ streamTextOptions: { model: mockModel } });
 		expect(typeof fetch).toBe("function");
 	});
 
 	it("throws when init.body is missing", async () => {
-		const fetch = createLocalFetch({ model: mockModel });
+		const fetch = createLocalFetch({ streamTextOptions: { model: mockModel } });
 		await expect(fetch("http://localhost/api/chat", {})).rejects.toThrow(
 			"[ai-sdk-local-fetch]",
 		);
 	});
 
 	it("throws when init.body is not a string", async () => {
-		const fetch = createLocalFetch({ model: mockModel });
+		const fetch = createLocalFetch({ streamTextOptions: { model: mockModel } });
 		await expect(
 			fetch("http://localhost/api/chat", { body: new Blob() }),
 		).rejects.toThrow("[ai-sdk-local-fetch]");
 	});
 
 	it("returns a Response for valid messages", async () => {
-		const fetch = createLocalFetch({ model: mockModel });
+		const fetch = createLocalFetch({ streamTextOptions: { model: mockModel } });
 		const response = await fetch(
 			"http://localhost/api/chat",
 			makeInit(sampleMessages),
@@ -72,7 +72,7 @@ describe("createLocalFetch", () => {
 	});
 
 	it("ignores the _input URL argument", async () => {
-		const fetch = createLocalFetch({ model: mockModel });
+		const fetch = createLocalFetch({ streamTextOptions: { model: mockModel } });
 		// should not throw regardless of the URL
 		const response = await fetch(
 			"https://any-url-is-ignored.example.com",
